@@ -1,71 +1,98 @@
-# structure-map README
+# Structure Map
 
-This is the README for your extension "structure-map". After writing up a brief description, we recommend including the following sections.
-
-## Features
-
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
-
-For example if there is an image subfolder under your extension project workspace:
-
-\!\[feature X\]\(images/feature-x.png\)
-
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
-
-## Requirements
-
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
-
-## Extension Settings
-
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
-This extension contributes the following settings:
-
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
-
-## Known Issues
-
-Calling out known issues can help limit users opening duplicate issues against your extension.
-
-## Release Notes
-
-Users appreciate release notes as you update your extension.
-
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
+A Visual Studio Code extension to list and map your project folder structure in a markdown file.
 
 ---
 
-## Following extension guidelines
+## Features
 
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
+- Automatically generates a hierarchical representation of your project's folder structure.
+- Supports recursive listing of folders and files.
+- Saves the folder structure to a markdown file in the root of your project.
+- Folders are prioritized at the top of the structure.
+- Easily accessible with a custom keyboard shortcut.
 
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
+---
 
-## Working with Markdown
+## Installation
 
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
+1. Open Visual Studio Code.
+2. Go to the **Extensions** view by clicking the Extensions icon in the Activity Bar on the side of the window or by pressing `Ctrl+Shift+X`.
+3. Search for **Structure Map** and click **Install**.
 
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
+Alternatively, you can install it directly from the marketplace by visiting the [Structure Map Extension Page](https://marketplace.visualstudio.com/items?itemName=YOUR_NAME.structure-map) and clicking the **Install** button.
 
-## For more information
+---
 
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
+## Usage
 
-**Enjoy!**
+### Command Palette:
+
+1. Open your project folder in VS Code.
+2. Press `Ctrl+Shift+P` (or `Cmd+Shift+P` on macOS) to open the Command Palette.
+3. Type **Structure Map: Create Folder Structure** and press `Enter`. This will generate a `folder_structure.md` file in your root directory.
+
+### Keyboard Shortcut:
+
+By default, you can use the following keyboard shortcut to generate the folder structure file:
+
+- **Windows/Linux**: `Ctrl+Alt+F`
+- **macOS**: `Cmd+Alt+F`
+
+The extension will create a `folder_structure.md` file with the project folder structure in markdown format, starting with the root folder and prioritizing folders before files.
+
+---
+
+## Output Format
+
+The generated `folder_structure.md` file will have the following format:
+
+```plaintext
+quran-api/
+├── controllers/
+│   ├── ChapterController.php
+│   └── EditionController.php
+├── database/
+│   └── Database.php
+├── models/
+│   ├── EditionModel.php
+│   └── QuranModel.php
+├── routes/
+│   └── api.php
+├── utils/
+│   └── loadEnv.php
+├── docker-compose.yml
+├── Dockerfile
+├── index.php
+├── quran.sql
+├── README.md
+└── test.py
+```
+---
+
+## Configuration
+
+By default, the extension will generate the folder structure of the **current workspace** and save it as `folder_structure.md` in the root folder.
+
+You can customize the folder structure output by modifying the following:
+
+1. The keyboard shortcut can be customized by modifying the keybindings in VS Code.
+2. The markdown output format is customizable in the extension code.
+
+---
+
+## Contributing
+
+If you want to contribute to the development of this extension, feel free to fork the repository and submit pull requests with your improvements.
+
+1. Fork the repository.
+2. Create a new branch.
+3. Make your changes.
+4. Test your changes.
+5. Submit a pull request.
+
+---
+
+## License
+
+This project is licensed under the MIT License.
