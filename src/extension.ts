@@ -2,6 +2,37 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 
+// Function to read the contents of ignore files
+const getIgnoredFiles = (dirPath: string): string[] => {
+    const ignoreFiles: string[] = [];
+    const ignorePatterns: string[] = [];
+
+    // List of possible ignore files
+    const ignoreFileNames = ['.gitignore', '.npmignore', '.dockerignore'];
+
+    // Check for the existence of each ignore file and read its content
+    ignoreFileNames.forEach((fileName) => {
+        const ignoreFilePath = path.join(dirPath, fileName);
+        if (fs.existsSync(ignoreFilePath)) {
+            const fileContent = fs.readFileSync(ignoreFilePath, 'utf-8');
+            // Parse each line and add to ignore patterns
+            ignorePatterns.push(...fileContent.split('\n').map(line => line.trim()).filter(line => line && !line.startsWith('#')));
+        }
+    });
+
+    // Normalize ignore patterns (e.g., strip leading/trailing spaces, ignore empty lines)
+    return ignorePatterns;
+};
+
+// Function to check if a file should be ignored
+const shouldIgnore = (filePath: string, ignorePatterns: string[]): boolean => {
+    return ignorePatterns.some(pattern => {
+        const regex = new RegExp(pattern.replace(/\./g, '\\.').replace(/\*/g, '.*').replace(/\?/g, '.'));
+        return regex.test(filePath);
+    });
+};
+
+// Main function to get the folder structure and filter ignored files
 export function activate(context: vscode.ExtensionContext) {
 
     console.log('Your extension "structure-map" is now active!');
@@ -13,6 +44,9 @@ export function activate(context: vscode.ExtensionContext) {
             vscode.window.showErrorMessage("No workspace folder found.");
             return;
         }
+
+        // Get ignored files patterns from .gitignore, .npmignore, etc.
+        const ignorePatterns = getIgnoredFiles(workspaceFolder);
 
         // Function to recursively get folder structure and file sizes
         const getFolderStructure = (dirPath: string, indent: string = ''): string => {
@@ -32,17 +66,22 @@ export function activate(context: vscode.ExtensionContext) {
 
             // First process folders
             directories.forEach((folder) => {
-                structure += `${indent}├── ${folder}/\n`; // Folder
-                structure += getFolderStructure(path.join(dirPath, folder), indent + "│   "); // Recursion with indent
+                const folderPath = path.join(dirPath, folder);
+                if (!shouldIgnore(folderPath, ignorePatterns)) {
+                    structure += `${indent}├── ${folder}/\n`; // Folder
+                    structure += getFolderStructure(folderPath, indent + "│   "); // Recursion with indent
+                }
             });
 
             // Then process files
             files.forEach((file, index) => {
-                const fullPath = path.join(dirPath, file);
-                const stats = fs.statSync(fullPath);
-                // Get file size in KB
-                const fileSizeInKB = (stats.size / 1024).toFixed(2);
-                structure += `${indent}${files.indexOf(file) === files.length - 1 ? "└──" : "├──"} ${file} [${fileSizeInKB} KB]\n`; // File with size
+                const filePath = path.join(dirPath, file);
+                if (!shouldIgnore(filePath, ignorePatterns)) {
+                    const stats = fs.statSync(filePath);
+                    // Get file size in KB
+                    const fileSizeInKB = (stats.size / 1024).toFixed(2);
+                    structure += `${indent}${files.indexOf(file) === files.length - 1 ? "└──" : "├──"} ${file} [${fileSizeInKB} KB]\n`; // File with size
+                }
             });
 
             return structure;
@@ -52,7 +91,7 @@ export function activate(context: vscode.ExtensionContext) {
         const rootFolder = path.basename(workspaceFolder);
 
         // Start the folder structure with the root folder
-        const folderStructure = `${rootFolder}\n` + getFolderStructure(workspaceFolder);
+        const folderStructure = `${rootFolder}/\n` + getFolderStructure(workspaceFolder, '');
 
         const outputFilePath = path.join(workspaceFolder, 'folder_structure.md');
 
