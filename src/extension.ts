@@ -90,7 +90,11 @@ function generateFolderStructure(dir: string, rootName: string): { folderStructu
                 }
 
                 stats.totalSize += statsObj.size;
-                files.push(`${item} [${(statsObj.size / 1024).toFixed(2)} KB]`);
+
+                // Display size in a suitable unit
+                const fileSize = formatFileSize(statsObj.size);
+
+                files.push(`${item} [${fileSize}]`);
             }
         });
 
@@ -129,13 +133,24 @@ Total Folders: ${totalFolders}
 Total Files: ${totalFiles}
 File Types:
 ${fileTypesSummary}
-Largest File: ${largestFile.name} [${(largestFile.size / 1024).toFixed(2)} KB]
-Smallest File: ${smallestFile.name} [${(smallestFile.size / 1024).toFixed(2)} KB]
-Total Project Size: ${(totalSize / 1024).toFixed(2)} KB
+Largest File: ${largestFile.name} [${formatFileSize(largestFile.size)}]
+Smallest File: ${smallestFile.name} [${formatFileSize(smallestFile.size)}]
+Total Project Size: ${formatFileSize(totalSize)}
 Ignored Files and Folders:
   - ${ignoredFiles.length > 0 ? ignoredFiles.join('\n  - ') : 'None'}
 \`\`\`
 `;
+}
+
+// Function to format file size in a suitable unit (bytes, KB, MB)
+function formatFileSize(size: number): string {
+    if (size < 1024) {
+        return `${size} bytes`;
+    } else if (size < 1024 * 1024) {
+        return `${(size / 1024).toFixed(2)} KB`;
+    } else {
+        return `${(size / (1024 * 1024)).toFixed(2)} MB`;
+    }
 }
 
 export function deactivate() {}
