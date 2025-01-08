@@ -19,9 +19,6 @@
     "theme": "light"
   },
   "pricing": "Free",
-  "activationEvents": [
-    "onCommand:structure-map.createFolderStructure"
-  ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
