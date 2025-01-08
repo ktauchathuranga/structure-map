@@ -2,109 +2,140 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 
-// Function to read the contents of ignore files
-const getIgnoredFiles = (dirPath: string): string[] => {
-    const ignoreFiles: string[] = [];
-    const ignorePatterns: string[] = [];
-
-    // List of possible ignore files
-    const ignoreFileNames = ['.gitignore', '.npmignore', '.dockerignore'];
-
-    // Check for the existence of each ignore file and read its content
-    ignoreFileNames.forEach((fileName) => {
-        const ignoreFilePath = path.join(dirPath, fileName);
-        if (fs.existsSync(ignoreFilePath)) {
-            const fileContent = fs.readFileSync(ignoreFilePath, 'utf-8');
-            // Parse each line and add to ignore patterns
-            ignorePatterns.push(...fileContent.split('\n').map(line => line.trim()).filter(line => line && !line.startsWith('#')));
-        }
-    });
-
-    // Normalize ignore patterns (e.g., strip leading/trailing spaces, ignore empty lines)
-    return ignorePatterns;
-};
-
-// Function to check if a file should be ignored
-const shouldIgnore = (filePath: string, ignorePatterns: string[]): boolean => {
-    return ignorePatterns.some(pattern => {
-        const regex = new RegExp(pattern.replace(/\./g, '\\.').replace(/\*/g, '.*').replace(/\?/g, '.'));
-        return regex.test(filePath);
-    });
-};
-
-// Main function to get the folder structure and filter ignored files
 export function activate(context: vscode.ExtensionContext) {
+    let disposable = vscode.commands.registerCommand('structure-map.createFolderStructure', async () => {
+        const workspaceFolders = vscode.workspace.workspaceFolders;
 
-    console.log('Your extension "structure-map" is now active!');
-
-    let disposable = vscode.commands.registerCommand('structure-map.createFolderStructure', () => {
-        const workspaceFolder = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
-
-        if (!workspaceFolder) {
-            vscode.window.showErrorMessage("No workspace folder found.");
+        if (!workspaceFolders) {
+            vscode.window.showErrorMessage("No workspace folder is open.");
             return;
         }
 
-        // Get ignored files patterns from .gitignore, .npmignore, etc.
-        const ignorePatterns = getIgnoredFiles(workspaceFolder);
+        const rootFolderPath = workspaceFolders[0].uri.fsPath;
+        const rootFolderName = path.basename(rootFolderPath);
 
-        // Function to recursively get folder structure and file sizes
-        const getFolderStructure = (dirPath: string, indent: string = ''): string => {
-            let structure = '';
-            const filesAndFolders = fs.readdirSync(dirPath);
+        // Generate folder structure
+        const { folderStructure, stats, ignoredFiles } = generateFolderStructure(rootFolderPath, rootFolderName);
 
-            // Separate folders and files, excluding hidden folders (those starting with '.')
-            const directories = filesAndFolders.filter(file => {
-                const fullPath = path.join(dirPath, file);
-                return fs.statSync(fullPath).isDirectory() && !file.startsWith('.');
-            });
+        // Save the structure and summary to a file
+        const fileName = path.join(rootFolderPath, 'folder-structure.md');
+        const summary = generateSummary(stats, rootFolderName, ignoredFiles);
+        const content = `${folderStructure}\n\n${summary}`;
 
-            const files = filesAndFolders.filter(file => {
-                const fullPath = path.join(dirPath, file);
-                return fs.statSync(fullPath).isFile() && !file.startsWith('.');
-            });
-
-            // First process folders
-            directories.forEach((folder) => {
-                const folderPath = path.join(dirPath, folder);
-                if (!shouldIgnore(folderPath, ignorePatterns)) {
-                    structure += `${indent}├── ${folder}/\n`; // Folder
-                    structure += getFolderStructure(folderPath, indent + "│   "); // Recursion with indent
-                }
-            });
-
-            // Then process files
-            files.forEach((file, index) => {
-                const filePath = path.join(dirPath, file);
-                if (!shouldIgnore(filePath, ignorePatterns)) {
-                    const stats = fs.statSync(filePath);
-                    // Get file size in KB
-                    const fileSizeInKB = (stats.size / 1024).toFixed(2);
-                    structure += `${indent}${files.indexOf(file) === files.length - 1 ? "└──" : "├──"} ${file} [${fileSizeInKB} KB]\n`; // File with size
-                }
-            });
-
-            return structure;
-        };
-
-        // Get the root folder name
-        const rootFolder = path.basename(workspaceFolder);
-
-        // Start the folder structure with the root folder
-        const folderStructure = `${rootFolder}/\n` + getFolderStructure(workspaceFolder, '');
-
-        const outputFilePath = path.join(workspaceFolder, 'folder_structure.md');
-
-        // Generate the markdown content
-        const markdownContent = `#### Folder Structure\n\n\`\`\`plaintext\n${folderStructure}\`\`\`\n---`;
-
-        // Write the markdown content to a file
-        fs.writeFileSync(outputFilePath, markdownContent);
-
-        vscode.window.showInformationMessage(`Folder structure saved to ${outputFilePath}`);
+        fs.writeFileSync(fileName, content, 'utf8');
+        vscode.window.showInformationMessage(`Folder structure saved to ${fileName}`);
     });
 
     context.subscriptions.push(disposable);
+}
+
+function generateFolderStructure(dir: string, rootName: string): { folderStructure: string; stats: any; ignoredFiles: string[] } {
+    let folderStructure = `\`\`\`plaintext\n${rootName}/\n`;
+    const stats = {
+        totalFolders: 0,
+        totalFiles: 0,
+        fileTypes: new Map<string, number>(),
+        largestFile: { name: '', size: 0 },
+        smallestFile: { name: '', size: Number.MAX_SAFE_INTEGER },
+        totalSize: 0,
+    };
+
+    const ignoredFiles: string[] = [];
+
+    // Parse .gitignore if available
+    const gitignorePath = path.join(dir, '.gitignore');
+    const ignoredPatterns = fs.existsSync(gitignorePath)
+        ? fs.readFileSync(gitignorePath, 'utf8').split(/\r?\n/).filter(line => line.trim() && !line.startsWith('#'))
+        : [];
+
+    const isIgnored = (filePath: string) => {
+        return ignoredPatterns.some(pattern => {
+            const relativePattern = path.join(dir, pattern).replace(/\\/g, '/');
+            const relativeFilePath = filePath.replace(/\\/g, '/');
+            return relativeFilePath.startsWith(relativePattern);
+        });
+    };
+
+    function walk(directory: string, depth: number): string[] {
+        const items = fs.readdirSync(directory).filter(item => !item.startsWith('.'));
+        let lines: string[] = [];
+        let folders: string[] = [];
+        let files: string[] = [];
+
+        items.forEach(item => {
+            const itemPath = path.join(directory, item);
+            const statsObj = fs.statSync(itemPath);
+
+            if (isIgnored(itemPath)) {
+                // Add the relative path to ignored files list
+                const relativePath = path.relative(dir, itemPath).replace(/\\/g, '/');
+                ignoredFiles.push(relativePath);
+                return;
+            }
+
+            if (statsObj.isDirectory()) {
+                stats.totalFolders++;
+                folders.push(item);
+            } else if (statsObj.isFile()) {
+                stats.totalFiles++;
+                const ext = path.extname(item).toLowerCase();
+                stats.fileTypes.set(ext, (stats.fileTypes.get(ext) || 0) + 1);
+
+                // Track largest and smallest files
+                if (statsObj.size > stats.largestFile.size) {
+                    stats.largestFile = { name: item, size: statsObj.size };
+                }
+                if (statsObj.size < stats.smallestFile.size) {
+                    stats.smallestFile = { name: item, size: statsObj.size };
+                }
+
+                stats.totalSize += statsObj.size;
+                files.push(`${item} [${(statsObj.size / 1024).toFixed(2)} KB]`);
+            }
+        });
+
+        // Sort: Folders first, then files
+        folders.sort().forEach(folder => {
+            lines.push(`${'│   '.repeat(depth)}├── ${folder}/`);
+            lines.push(...walk(path.join(directory, folder), depth + 1));
+        });
+
+        files.sort().forEach(file => {
+            lines.push(`${'│   '.repeat(depth)}├── ${file}`);
+        });
+
+        return lines;
+    }
+
+    folderStructure += walk(dir, 0).join('\n');
+    folderStructure += '\n```';
+    return { folderStructure, stats, ignoredFiles };
+}
+
+function generateSummary(stats: any, rootFolderName: string, ignoredFiles: string[]): string {
+    const { totalFolders, totalFiles, fileTypes, largestFile, smallestFile, totalSize } = stats;
+
+    // Make sure fileTypes is treated as Map<string, number>
+    const fileTypesSummary = Array.from(fileTypes.entries() as IterableIterator<[string, number]>)
+        .map(([type, count]) => `  - ${type || 'No Extension'} Files: ${count}`)
+        .join('\n');
+
+    return `
+### Summary
+
+\`\`\`plaintext
+Root Folder: ${rootFolderName}
+Total Folders: ${totalFolders}
+Total Files: ${totalFiles}
+File Types:
+${fileTypesSummary}
+Largest File: ${largestFile.name} [${(largestFile.size / 1024).toFixed(2)} KB]
+Smallest File: ${smallestFile.name} [${(smallestFile.size / 1024).toFixed(2)} KB]
+Total Project Size: ${(totalSize / 1024).toFixed(2)} KB
+Ignored Files and Folders:
+  - ${ignoredFiles.length > 0 ? ignoredFiles.join('\n  - ') : 'None'}
+\`\`\`
+`;
 }
 
 export function deactivate() {}
