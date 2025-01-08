@@ -14,24 +14,35 @@ export function activate(context: vscode.ExtensionContext) {
             return;
         }
 
-        // Function to recursively get folder structure, prioritizing folders first
+        // Function to recursively get folder structure and file sizes
         const getFolderStructure = (dirPath: string, indent: string = ''): string => {
             let structure = '';
-
-            // First get directories
             const filesAndFolders = fs.readdirSync(dirPath);
-            const directories = filesAndFolders.filter(file => fs.statSync(path.join(dirPath, file)).isDirectory() && !file.startsWith('.'));
-            const files = filesAndFolders.filter(file => fs.statSync(path.join(dirPath, file)).isFile() && !file.startsWith('.'));
 
-            // Add directories first
-            directories.forEach((folder, index) => {
-                structure += `${indent}├── ${folder}/\n`;
-                structure += getFolderStructure(path.join(dirPath, folder), indent + "│   "); // Recursion with indent for subfolders
+            // Separate folders and files, excluding hidden folders (those starting with '.')
+            const directories = filesAndFolders.filter(file => {
+                const fullPath = path.join(dirPath, file);
+                return fs.statSync(fullPath).isDirectory() && !file.startsWith('.');
             });
 
-            // Then add files
+            const files = filesAndFolders.filter(file => {
+                const fullPath = path.join(dirPath, file);
+                return fs.statSync(fullPath).isFile() && !file.startsWith('.');
+            });
+
+            // First process folders
+            directories.forEach((folder) => {
+                structure += `${indent}├── ${folder}/\n`; // Folder
+                structure += getFolderStructure(path.join(dirPath, folder), indent + "│   "); // Recursion with indent
+            });
+
+            // Then process files
             files.forEach((file, index) => {
-                structure += `${indent}${index === files.length - 1 ? "└──" : "├──"} ${file}\n`; // File with proper symbol
+                const fullPath = path.join(dirPath, file);
+                const stats = fs.statSync(fullPath);
+                // Get file size in KB
+                const fileSizeInKB = (stats.size / 1024).toFixed(2);
+                structure += `${indent}${files.indexOf(file) === files.length - 1 ? "└──" : "├──"} ${file} [${fileSizeInKB} KB]\n`; // File with size
             });
 
             return structure;
@@ -41,12 +52,12 @@ export function activate(context: vscode.ExtensionContext) {
         const rootFolder = path.basename(workspaceFolder);
 
         // Start the folder structure with the root folder
-        const folderStructure = `${rootFolder}/\n` + getFolderStructure(workspaceFolder);
+        const folderStructure = `${rootFolder}\n` + getFolderStructure(workspaceFolder);
 
         const outputFilePath = path.join(workspaceFolder, 'folder_structure.md');
 
         // Generate the markdown content
-        const markdownContent = `#### **Folder Structure**\n\n\`\`\`plaintext\n${folderStructure}\`\`\`\n---`;
+        const markdownContent = `#### Folder Structure\n\n\`\`\`plaintext\n${folderStructure}\`\`\`\n---`;
 
         // Write the markdown content to a file
         fs.writeFileSync(outputFilePath, markdownContent);
