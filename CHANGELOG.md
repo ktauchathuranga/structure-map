@@ -18,3 +18,8 @@ doc changes
 
 cleanup release
 
+## [v0.2.0] - 2025-01-08
+
+- added project summary
+- .gitignore file will not count
+
