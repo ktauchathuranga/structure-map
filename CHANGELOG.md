@@ -23,3 +23,7 @@ cleanup release
 - added project summary
 - .gitignore file will not count
 
+## [v0.2.1] - 2025-01-08
+
+- file size types will adjust acording to the size
+
