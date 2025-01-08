@@ -1,6 +1,6 @@
 # Structure Map
 
-A Visual Studio Code extension to list and map your project folder structure in a markdown file.
+A Visual Studio Code extension to list and map your project folder structure in a markdown file, including information about ignored files and folders based on `.gitignore`.
 
 ---
 
@@ -8,6 +8,7 @@ A Visual Studio Code extension to list and map your project folder structure in 
 
 - Automatically generates a hierarchical representation of your project's folder structure.
 - Supports recursive listing of folders and files.
+- Includes ignored files and folders based on `.gitignore` in the summary.
 - Saves the folder structure to a markdown file in the root of your project.
 - Folders are prioritized at the top of the structure.
 - Easily accessible with a custom keyboard shortcut.
@@ -20,7 +21,7 @@ A Visual Studio Code extension to list and map your project folder structure in 
 2. Go to the **Extensions** view by clicking the Extensions icon in the Activity Bar on the side of the window or by pressing `Ctrl+Shift+X`.
 3. Search for **Structure Map** and click **Install**.
 
-Alternatively, you can install it directly from the marketplace by visiting the [Structure Map Extension Page](https://marketplace.visualstudio.com/items?itemName=YOUR_NAME.structure-map) and clicking the **Install** button.
+Alternatively, you can install it directly from the marketplace by visiting the [Structure Map Extension Page](https://marketplace.visualstudio.com/items?itemName=ashen-chathuranga.structure-map) and clicking the **Install** button.
 
 ---
 
@@ -67,7 +68,28 @@ quran
 ├── quran.sql [170411.50 KB]
 ├── README.md [6.02 KB]
 └── test.py [0.31 KB]
+
+Summary
+
+Root Folder: quran
+Total Folders: 6
+Total Files: 9
+File Types:
+  - .php Files: 5
+  - .yml Files: 1
+  - .sql Files: 1
+  - .md Files: 1
+  - .py Files: 1
+Largest File: quran.sql [166.63 MB]
+Smallest File: index.php [72.00 KB]
+Total Project Size: 170.41 MB
+Ignored Files and Folders:
+  - node_modules/
+  - .env
+  - logs/
+  - *.log
 ```
+
 ---
 
 ## Configuration
@@ -78,6 +100,7 @@ You can customize the folder structure output by modifying the following:
 
 1. The keyboard shortcut can be customized by modifying the keybindings in VS Code.
 2. The markdown output format is customizable in the extension code.
+3. Ignored files and folders are detected using the `.gitignore` file in the root directory.
 
 ---
 
