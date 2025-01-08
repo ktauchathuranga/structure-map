@@ -1,9 +1,9 @@
 {
   "name": "structure-map",
   "displayName": "Structure Map",
-  "description": "Generate and map your project structure into a text file.",
+  "description": "Generate and map your project structure into a markdown file.",
   "publisher": "ashen-chathuranga",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "author": {
     "name": "Ashen Chathuranga"
     },
