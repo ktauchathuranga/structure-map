@@ -14,28 +14,24 @@ export function activate(context: vscode.ExtensionContext) {
             return;
         }
 
-        // Function to recursively get folder structure
+        // Function to recursively get folder structure, prioritizing folders first
         const getFolderStructure = (dirPath: string, indent: string = ''): string => {
             let structure = '';
+
+            // First get directories
             const filesAndFolders = fs.readdirSync(dirPath);
+            const directories = filesAndFolders.filter(file => fs.statSync(path.join(dirPath, file)).isDirectory() && !file.startsWith('.'));
+            const files = filesAndFolders.filter(file => fs.statSync(path.join(dirPath, file)).isFile() && !file.startsWith('.'));
 
-            filesAndFolders.forEach((file, index) => {
-                const fullPath = path.join(dirPath, file);
-                const stats = fs.statSync(fullPath);
+            // Add directories first
+            directories.forEach((folder, index) => {
+                structure += `${indent}├── ${folder}/\n`;
+                structure += getFolderStructure(path.join(dirPath, folder), indent + "│   "); // Recursion with indent for subfolders
+            });
 
-                // Skip hidden files/folders (those starting with a dot)
-                if (file.startsWith('.')) {
-                    return;
-                }
-
-                const isLastItem = index === filesAndFolders.length - 1;
-
-                if (stats.isDirectory()) {
-                    structure += `${indent}├── ${file}/\n`; // Folder without bold
-                    structure += getFolderStructure(fullPath, indent + (isLastItem ? "    " : "│   ")); // Recursion with indent
-                } else {
-                    structure += `${indent}${isLastItem ? "└──" : "├──"} ${file}\n`; // File
-                }
+            // Then add files
+            files.forEach((file, index) => {
+                structure += `${indent}${index === files.length - 1 ? "└──" : "├──"} ${file}\n`; // File with proper symbol
             });
 
             return structure;
