@@ -30,7 +30,7 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 function generateFolderStructure(dir: string, rootName: string): { folderStructure: string; stats: any; ignoredFiles: string[] } {
-    let folderStructure = `\`\`\`plaintext\n${rootName}/\n`;
+    let folderStructure = `### Project Structure\n\n\`\`\`plaintext\n${rootName}\n`;
     const stats = {
         totalFolders: 0,
         totalFiles: 0,
@@ -56,7 +56,7 @@ function generateFolderStructure(dir: string, rootName: string): { folderStructu
         });
     };
 
-    function walk(directory: string, depth: number): string[] {
+    function walk(directory: string, depth: number, isLastChild: boolean[]): string[] {
         const items = fs.readdirSync(directory).filter(item => !item.startsWith('.'));
         let lines: string[] = [];
         let folders: string[] = [];
@@ -67,7 +67,6 @@ function generateFolderStructure(dir: string, rootName: string): { folderStructu
             const statsObj = fs.statSync(itemPath);
 
             if (isIgnored(itemPath)) {
-                // Add the relative path to ignored files list
                 const relativePath = path.relative(dir, itemPath).replace(/\\/g, '/');
                 ignoredFiles.push(relativePath);
                 return;
@@ -81,7 +80,6 @@ function generateFolderStructure(dir: string, rootName: string): { folderStructu
                 const ext = path.extname(item).toLowerCase();
                 stats.fileTypes.set(ext, (stats.fileTypes.get(ext) || 0) + 1);
 
-                // Track largest and smallest files
                 if (statsObj.size > stats.largestFile.size) {
                     stats.largestFile = { name: item, size: statsObj.size };
                 }
@@ -91,31 +89,43 @@ function generateFolderStructure(dir: string, rootName: string): { folderStructu
 
                 stats.totalSize += statsObj.size;
 
-                // Display size in a suitable unit
                 const fileSize = formatFileSize(statsObj.size);
-
                 files.push(`${item} [${fileSize}]`);
             }
         });
 
-        // Sort: Folders first, then files
-        folders.sort().forEach(folder => {
-            lines.push(`${'│   '.repeat(depth)}├── ${folder}/`);
-            lines.push(...walk(path.join(directory, folder), depth + 1));
-        });
+        folders.sort();
+        files.sort();
 
-        files.sort().forEach(file => {
-            lines.push(`${'│   '.repeat(depth)}├── ${file}`);
+        const allItems = [...folders, ...files];
+        allItems.forEach((item, index) => {
+            const isLast = index === allItems.length - 1;
+            const itemPath = path.join(directory, item);
+
+            if (folders.includes(item)) {
+                const branch = getBranch(isLast, isLastChild);
+                lines.push(`${branch}${item}/`);
+                lines.push(...walk(itemPath, depth + 1, [...isLastChild, isLast]));
+            } else {
+                const branch = getBranch(isLast, isLastChild);
+                lines.push(`${branch}${item}`);
+            }
         });
 
         return lines;
     }
 
-    folderStructure += walk(dir, 0).join('\n');
+    function getBranch(isLast: boolean, isLastChild: boolean[]): string {
+        return isLastChild
+            .map(isLastLevel => (isLastLevel ? '    ' : '│   '))
+            .join('') + (isLast ? '└── ' : '├── ');
+    }
+
+    folderStructure += walk(dir, 0, []).join('\n');
     folderStructure += '\n```';
+
     return { folderStructure, stats, ignoredFiles };
 }
-
 function generateSummary(stats: any, rootFolderName: string, ignoredFiles: string[]): string {
     const { totalFolders, totalFiles, fileTypes, largestFile, smallestFile, totalSize } = stats;
 
