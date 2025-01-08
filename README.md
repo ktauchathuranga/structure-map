@@ -52,42 +52,44 @@ The generated `folder_structure.md` file will have the following format:
 quran
 ├── controllers/
 │   ├── ChapterController.php [2.08 KB]
-│   └── EditionController.php [0.59 KB]
+│   └── EditionController.php [601 bytes]
 ├── database/
 │   └── Database.php [1.08 KB]
 ├── models/
-│   ├── EditionModel.php [0.45 KB]
+│   ├── EditionModel.php [459 bytes]
 │   └── QuranModel.php [2.35 KB]
 ├── routes/
 │   └── api.php [2.16 KB]
 ├── utils/
-│   └── loadEnv.php [0.75 KB]
-├── docker-compose.yml [0.35 KB]
-├── Dockerfile [0.30 KB]
-├── index.php [0.07 KB]
-├── quran.sql [170411.50 KB]
+│   └── loadEnv.php [768 bytes]
+├── Dockerfile [310 bytes]
 ├── README.md [6.02 KB]
-└── test.py [0.31 KB]
+├── docker-compose.yml [358 bytes]
+├── folder-structure.md [1023 bytes]
+├── index.php [67 bytes]
+├── quran.sql [166.42 MB]
+└── test.py [320 bytes]
+```
 
-Summary
 
+### Summary
+
+```plaintext
 Root Folder: quran
-Total Folders: 6
-Total Files: 9
+Total Folders: 5
+Total Files: 14
 File Types:
-  - .php Files: 5
   - .yml Files: 1
+  - No Extension Files: 1
+  - .md Files: 2
+  - .php Files: 8
   - .sql Files: 1
-  - .md Files: 1
   - .py Files: 1
-Largest File: quran.sql [166.63 MB]
-Smallest File: index.php [72.00 KB]
-Total Project Size: 170.41 MB
+Largest File: quran.sql [166.42 MB]
+Smallest File: index.php [67 bytes]
+Total Project Size: 166.43 MB
 Ignored Files and Folders:
-  - node_modules/
-  - .env
-  - logs/
-  - *.log
+  - None
 ```
 
 ---
