@@ -48,25 +48,25 @@ The extension will create a `folder_structure.md` file with the project folder s
 The generated `folder_structure.md` file will have the following format:
 
 ```plaintext
-quran-api/
+quran
 ├── controllers/
-│   ├── ChapterController.php
-│   └── EditionController.php
+│   ├── ChapterController.php [2.08 KB]
+│   └── EditionController.php [0.59 KB]
 ├── database/
-│   └── Database.php
+│   └── Database.php [1.08 KB]
 ├── models/
-│   ├── EditionModel.php
-│   └── QuranModel.php
+│   ├── EditionModel.php [0.45 KB]
+│   └── QuranModel.php [2.35 KB]
 ├── routes/
-│   └── api.php
+│   └── api.php [2.16 KB]
 ├── utils/
-│   └── loadEnv.php
-├── docker-compose.yml
-├── Dockerfile
-├── index.php
-├── quran.sql
-├── README.md
-└── test.py
+│   └── loadEnv.php [0.75 KB]
+├── docker-compose.yml [0.35 KB]
+├── Dockerfile [0.30 KB]
+├── index.php [0.07 KB]
+├── quran.sql [170411.50 KB]
+├── README.md [6.02 KB]
+└── test.py [0.31 KB]
 ```
 ---
 
