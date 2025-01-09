@@ -17,9 +17,9 @@ A Visual Studio Code extension to list and map your project folder structure in 
 
 To see how the **Structure Map** works, check out this quick demo:  
 
-<video src="images/demo.mp4" alt="Demo of Structure Map" width="100%" style="border: 1px solid #ccc; border-radius: 4px;"/>  
+- NO DEMO JUST PRESS `CTRL+ALT+F` :/
 
----
+
 
 ## Installation
 

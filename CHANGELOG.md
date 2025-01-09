@@ -31,4 +31,7 @@ cleanup release
 
 - imporved ignore alogrithm
 - some tweakes to make it luk gud :D
-  
+
+## [v0.2.3] - 2025-01-09
+
+- GIF frustration
