@@ -29,6 +29,44 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(disposable);
 }
 
+function isIgnored(filePath: string, gitignorePatterns: string[], rootFolderPath: string): boolean {
+    return gitignorePatterns.some(pattern => {
+        // Convert both paths to be relative and use the correct separators
+        const relativeFilePath = path.relative(rootFolderPath, filePath).replace(/\\/g, '/');
+        let relativePattern = pattern.trim().replace(/\\/g, '/');
+
+        // Ignore empty patterns and comments
+        if (!relativePattern || relativePattern.startsWith('#')) return false;
+
+        // Handle wildcard patterns
+        const regexPattern = convertGitignorePatternToRegex(relativePattern);
+
+        // Check if the file path matches the pattern using regex
+        return regexPattern.test(relativeFilePath);
+    });
+}
+
+// Convert a .gitignore pattern to a regex pattern
+function convertGitignorePatternToRegex(pattern: string): RegExp {
+    // Escape special regex characters except '*' and '**'
+    pattern = pattern.replace(/([.+^=!:${}()|\[\]\/\\])/g, '\\$1');
+    
+    // Handle ** for matching directories recursively
+    pattern = pattern.replace(/\*\*/g, '(.+?)');
+    
+    // Handle * for matching anything except slashes
+    pattern = pattern.replace(/\*/g, '[^/]*');
+    
+    // Allow for a trailing slash to denote directories
+    if (pattern.endsWith('/')) {
+        pattern = `^${pattern}$`;
+    } else {
+        pattern = `^${pattern}(/|$)`;
+    }
+
+    return new RegExp(pattern);
+}
+
 function generateFolderStructure(dir: string, rootName: string): { folderStructure: string; stats: any; ignoredFiles: string[] } {
     let folderStructure = `### Project Structure\n\n\`\`\`plaintext\n${rootName}\n`;
     const stats = {
@@ -44,17 +82,9 @@ function generateFolderStructure(dir: string, rootName: string): { folderStructu
 
     // Parse .gitignore if available
     const gitignorePath = path.join(dir, '.gitignore');
-    const ignoredPatterns = fs.existsSync(gitignorePath)
+    const gitignorePatterns = fs.existsSync(gitignorePath)
         ? fs.readFileSync(gitignorePath, 'utf8').split(/\r?\n/).filter(line => line.trim() && !line.startsWith('#'))
         : [];
-
-    const isIgnored = (filePath: string) => {
-        return ignoredPatterns.some(pattern => {
-            const relativePattern = path.join(dir, pattern).replace(/\\/g, '/');
-            const relativeFilePath = filePath.replace(/\\/g, '/');
-            return relativeFilePath.startsWith(relativePattern);
-        });
-    };
 
     function walk(directory: string, depth: number, isLastChild: boolean[]): string[] {
         const items = fs.readdirSync(directory).filter(item => !item.startsWith('.'));
@@ -66,7 +96,7 @@ function generateFolderStructure(dir: string, rootName: string): { folderStructu
             const itemPath = path.join(directory, item);
             const statsObj = fs.statSync(itemPath);
 
-            if (isIgnored(itemPath)) {
+            if (isIgnored(itemPath, gitignorePatterns, dir)) {
                 const relativePath = path.relative(dir, itemPath).replace(/\\/g, '/');
                 ignoredFiles.push(relativePath);
                 return;
@@ -126,6 +156,7 @@ function generateFolderStructure(dir: string, rootName: string): { folderStructu
 
     return { folderStructure, stats, ignoredFiles };
 }
+
 function generateSummary(stats: any, rootFolderName: string, ignoredFiles: string[]): string {
     const { totalFolders, totalFiles, fileTypes, largestFile, smallestFile, totalSize } = stats;
 
