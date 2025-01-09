@@ -13,6 +13,12 @@ A Visual Studio Code extension to list and map your project folder structure in 
 - Folders are prioritized at the top of the structure.
 - Easily accessible with a custom keyboard shortcut.
 
+## Quick Demo  
+
+To see how the **Structure Map** works, check out this quick demo:  
+
+<img src="images/demo.gif" alt="Demo of IStructure Map" width="100%" style="border: 1px solid #ccc; border-radius: 4px;"/>  
+
 ---
 
 ## Installation
@@ -23,7 +29,6 @@ A Visual Studio Code extension to list and map your project folder structure in 
 
 Alternatively, you can install it directly from the marketplace by visiting the [Structure Map Extension Page](https://marketplace.visualstudio.com/items?itemName=ashen-chathuranga.structure-map) and clicking the **Install** button.
 
----
 
 ## Usage
 
