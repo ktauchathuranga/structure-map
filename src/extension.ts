@@ -36,7 +36,9 @@ function isIgnored(filePath: string, gitignorePatterns: string[], rootFolderPath
         let relativePattern = pattern.trim().replace(/\\/g, '/');
 
         // Ignore empty patterns and comments
-        if (!relativePattern || relativePattern.startsWith('#')) return false;
+        if (!relativePattern || relativePattern.startsWith('#')) {
+            return false;
+        }
 
         // Handle wildcard patterns
         const regexPattern = convertGitignorePatternToRegex(relativePattern);
