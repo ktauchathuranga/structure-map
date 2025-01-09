@@ -27,7 +27,7 @@ cleanup release
 
 - file size types will adjust acording to the size
 
-## [v0.2.1] - 2025-01-08
+## [v0.2.2] - 2025-01-09
 
 - imporved ignore alogrithm
 - some tweakes to make it luk gud :D
